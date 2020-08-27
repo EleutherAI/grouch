@@ -4,20 +4,38 @@ from app import app
 from .forms import GarbageForm
 import os
 
-APP_PATH = '/home/tobias/grouch/'
-# file routes:
+APP_PATH = os.environ.get('APP_PATH', '/home/tobias/grouch/')
+DATA_FOLDER = os.path.join(APP_PATH, 'data')
+
 def pick_data():
-    for _, _, files in os.walk(APP_PATH + 'app/data/not_started'):    
+    for _, _, files in os.walk(os.path.join(DATA_FOLDER, 'not_started')): 
         not_started_files = files
-    chosen_file = random.choice(files)
-    with open(APP_PATH + 'app/data/not_started/' + chosen_file, 'r') as chosen_file_obj:
-        text = chosen_file_obj.read().split('\n')
-    os.rename( os.path.join(APP_PATH, 'app/data/not_started/', chosen_file),  os.path.join(APP_PATH,'app/data/in_progress/',chosen_file)) 
+
+    chosen_file = random.choice(not_started_files)
+    chosen_file_path = os.path.join(DATA_FOLDER, 'not_started', chosen_file)
+    with open(chosen_file_path, 'r') as fd:
+        text = fd.read().splitlines()
+
+    start(chosen_file)
     return (chosen_file, text)
 
-def is_garbage(filename):
-    os.rename('./app/data/in_progress' + filename, './app/data/in_progress' + filename) 
+def accept(filename):
+    os.rename( 
+        os.path.join(DATA_FOLDER, 'in_progress', filename), 
+        os.path.join(DATA_FOLDER, 'accepted', filename)
+    )
 
+def start(filename):
+    os.rename( 
+        os.path.join(DATA_FOLDER, 'not_started', filename), 
+        os.path.join(DATA_FOLDER, 'in_progress', filename)
+    )
+
+def trash(filename):
+    os.rename( 
+        os.path.join(DATA_FOLDER, 'in_progress', filename), 
+        os.path.join(DATA_FOLDER, 'garbage', filename)
+    )
 
 
 #@app.route('/bet', methods=['GET', 'POST'])
@@ -40,12 +58,11 @@ def index():
         filename, text = pick_data()
         form = GarbageForm(filename=filename)
     if request.method == 'POST':
-        print(request.form)
         if 'garbage' in request.form:
-            os.rename( os.path.join(APP_PATH ,'app/data/in_progress/',request.form['filename']), os.path.join(APP_PATH ,'app/data/garbage/', request.form['filename'])) 
+            trash(request.form['filename'])
             return redirect('/')
         elif 'not garbage' in request.form:
-            os.rename( os.path.join(APP_PATH ,'app/data/in_progress/', request.form['filename']),  os.path.join(APP_PATH ,'app/data/garbage/', request.form['filename'])) 
+            accept(request.form['filename']) 
             return redirect('/')
     return render_template('action.html', form = form, text=text)
 
