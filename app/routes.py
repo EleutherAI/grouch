@@ -4,14 +4,15 @@ from app import app
 from .forms import GarbageForm
 import os
 
+APP_PATH = '/home/tobias/grouch/'
 # file routes:
 def pick_data():
-    for _, _, files in os.walk('./app/data/not_started'):    
+    for _, _, files in os.walk(APP_PATH + 'app/data/not_started'):    
         not_started_files = files
     chosen_file = random.choice(files)
-    with open('./app/data/not_started/' + chosen_file, 'r') as chosen_file_obj:
+    with open(APP_PATH + 'app/data/not_started/' + chosen_file, 'r') as chosen_file_obj:
         text = chosen_file_obj.read().split('\n')
-    os.rename('./app/data/not_started/' + chosen_file, './app/data/in_progress/' + chosen_file) 
+    os.rename( os.path.join(APP_PATH, 'app/data/not_started/', chosen_file),  os.path.join(APP_PATH,'app/data/in_progress/',chosen_file)) 
     return (chosen_file, text)
 
 def is_garbage(filename):
@@ -41,10 +42,10 @@ def index():
     if request.method == 'POST':
         print(request.form)
         if 'garbage' in request.form:
-            os.rename('./app/data/in_progress/' + request.form['filename'], './app/data/garbage/' + request.form['filename']) 
+            os.rename( os.path.join(APP_PATH ,'app/data/in_progress/',request.form['filename']), os.path.join(APP_PATH ,'app/data/garbage/', request.form['filename'])) 
             return redirect('/')
         elif 'not garbage' in request.form:
-            os.rename('./app/data/in_progress/' + request.form['filename'], './app/data/garbage/' + request.form['filename']) 
+            os.rename( os.path.join(APP_PATH ,'app/data/in_progress/', request.form['filename']),  os.path.join(APP_PATH ,'app/data/garbage/', request.form['filename'])) 
             return redirect('/')
     return render_template('action.html', form = form, text=text)
 
